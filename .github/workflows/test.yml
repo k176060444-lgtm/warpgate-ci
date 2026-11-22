@@ -1,6 +1,14 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      pytest_args:
+        description: "Extra pytest arguments (e.g. test_ssh_egress_proxy.py). Empty runs the full suite."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -75,7 +83,7 @@ jobs:
       - name: Run
         working-directory: tests
         run: |
-          TIMEOUT=120 poetry run ./run.sh
+          TIMEOUT=120 poetry run ./run.sh ${{ inputs.pytest_args }}
           cargo llvm-cov report --lcov > coverage.lcov
 
       - name: Upload coverage
