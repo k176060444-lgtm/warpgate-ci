@@ -161,6 +161,12 @@ class Test:
         )
 
         ssh_client = processes.start_ssh_client(
+            # `-tt` (not `-t`): start_ssh_client runs ssh through subprocess with
+            # no controlling terminal, so plain `-t` would be refused and the
+            # session would stay PTY-less. `-tt` forces allocation, which is what
+            # makes Warpgate's emit_pty_error output reachable at all — it only
+            # writes to channels that have a PTY.
+            "-tt",
             f"{user.username}:{ssh_target.name}@localhost",
             "-p",
             str(shared_wg.ssh_port),
@@ -168,11 +174,19 @@ class Test:
             "echo",
             "unreachable",
             password="123",
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        _, stderr = ssh_client.communicate(timeout=timeout)
+        stdout, _ = ssh_client.communicate(timeout=timeout)
         assert ssh_client.returncode != 0
-        assert b"proxy" in stderr.lower()
+        # emit_pty_error writes through channel_writer::write, i.e. SSH channel
+        # data (stdout), not extended data (stderr). The text comes from
+        # ConnectionError::Proxy -> #[error("Proxy error: {0}")], rendered as
+        # "● Warpgate: Target connection failed: Proxy error: <detail>".
+        # Both halves are asserted: the generic prefix rules out other failure
+        # paths, the variant text pins this to the proxy code path.
+        assert b"Target connection failed" in stdout
+        assert b"Proxy error" in stdout
 
     def test_no_proxy_still_connects(
         self,
