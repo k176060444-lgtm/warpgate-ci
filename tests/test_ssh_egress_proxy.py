@@ -174,7 +174,6 @@ class Test:
             "echo",
             "unreachable",
             password="123",
-            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
         stdout, _ = ssh_client.communicate(timeout=timeout)
