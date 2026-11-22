@@ -1,0 +1,31 @@
+use poem_openapi::OpenApi;
+
+mod api_tokens;
+pub mod auth;
+mod auth_scheme;
+pub(crate) mod common;
+mod credentials;
+pub mod info;
+pub mod sso_provider_detail;
+pub mod sso_provider_list;
+pub mod targets_list;
+pub mod ticket_request_targets;
+pub mod ticket_requests;
+mod web_desktop;
+mod web_ssh;
+
+pub fn get() -> impl OpenApi {
+    (
+        auth::Api,
+        info::Api,
+        targets_list::Api,
+        sso_provider_list::Api,
+        sso_provider_detail::Api,
+        credentials::Api,
+        api_tokens::Api,
+        ticket_requests::Api,
+        ticket_request_targets::Api,
+        web_ssh::Api,
+        web_desktop::Api,
+    )
+}
